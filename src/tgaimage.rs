@@ -4,7 +4,7 @@ use std::io::{File, Reader, IoResult, IoError, IoErrorKind};
 use std::path::posix::Path;
 use std::ops::{Index, IndexMut};
 use std::default::Default;
-use std::ptr::set_memory;
+use std::ptr::{set_memory, copy_memory};
 
 // TODO use std::ptr::copy_memory and copy_nonoverlapping_memory for color/chunk copying
 
@@ -85,11 +85,11 @@ impl Color {
     pub fn new() -> Self {
         Color {b: 0, g: 0, r: 0, a: 0, bytespp: 1}
     }
-    
+
     pub fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {
         Color {b: b, g: g, r: r, a: a, bytespp: 4}
     }
-    
+
     pub fn from_raw(raw: &[u8], bpp: usize) -> Self {
         let b = raw[0];
         let g = if bpp > 1 { raw[1] } else { 0 };
@@ -156,7 +156,7 @@ impl Image {
         let p = Path::new(filename);
         let mut f = try!(File::open(&p));
         let header = try!(Header::from_stream(&mut f));
-        
+
         let w = header.width;
         let h = header.height;
         let bpp = header.bits_per_pixel >> 3;
@@ -332,13 +332,17 @@ impl Image {
 
     pub fn flip_vertically(&mut self) -> IoResult<()> {
         let half: usize = self.height >> 1;
-        let h = self.height;
-        for i in range(0us, self.width) {
-            for j in range(0us, half) {
-                let c1 = try!(self.get(i, j));
-                let c2 = try!(self.get(i, h - 1 - j));
-                try!(self.set(i, j, &c2));
-                try!(self.set(i, h - 1 - j, &c1));
+        let bytes_per_line = self.width * self.bytespp;
+        let mut line = Vec::with_capacity(bytes_per_line);
+        line.resize(bytes_per_line, 0u8);
+
+        for j in range(0us, half) {
+            let l1 = j * bytes_per_line;
+            let l2 = (self.height - 1 - j) * bytes_per_line;
+            unsafe {
+                copy_memory(line.as_mut_ptr(), self.data.as_ptr().offset(l1 as isize), bytes_per_line);
+                copy_memory(self.data.as_mut_ptr().offset(l1 as isize), self.data.as_ptr().offset(l2 as isize), bytes_per_line);
+                copy_memory(self.data.as_mut_ptr().offset(l2 as isize), line.as_ptr(), bytes_per_line);
             }
         }
         Ok(())
