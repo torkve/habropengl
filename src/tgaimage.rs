@@ -4,9 +4,8 @@ use std::io::{File, Reader, IoResult, IoError, IoErrorKind};
 use std::path::posix::Path;
 use std::ops::{Index, IndexMut};
 use std::default::Default;
-use std::ptr::{set_memory, copy_memory};
-
-// TODO use std::ptr::copy_memory and copy_nonoverlapping_memory for color/chunk copying
+use std::ptr::{set_memory, copy_memory, copy_nonoverlapping_memory};
+use std::mem::transmute;
 
 #[packed]
 #[derive(PartialEq, Clone, Default)]
@@ -362,16 +361,10 @@ impl Image {
             return Err(IoError{kind: IoErrorKind::InvalidInput, desc: "Wrong coords", detail: None})
         }
         let start = (x + y * self.width) * self.bytespp;
-        let bytes = self.data.as_mut_slice().slice_from_mut(start);
-        bytes[0] = c.b;
-        if self.bytespp > 1 {
-            bytes[1] = c.g;
-        }
-        if self.bytespp > 2 {
-            bytes[2] = c.r;
-        }
-        if self.bytespp > 3 {
-            bytes[3] = c.a;
+        unsafe
+        {
+            let cc: &u8 = transmute(c);
+            copy_nonoverlapping_memory(self.data.as_mut_ptr().offset(start as isize), &*cc as *const u8, self.bytespp);
         }
         Ok(())
     }
@@ -380,37 +373,37 @@ impl Image {
         let mut newdata = Vec::with_capacity(w * h * self.bytespp);
         newdata.resize(w * h * self.bytespp, 0u8);
 
-        let mut nscanline = 0us;
-        let mut oscanline = 0us;
-        let mut erry = 0i32;
+        let mut nscanline = 0is;
+        let mut oscanline = 0is;
+        let mut erry = 0is;
         let nlinebytes = w * self.bytespp;
-        let olinebytes = self.width * self.bytespp;
+        let olinebytes = (self.width * self.bytespp) as isize;
 
         for _ in range(0, self.height) {
-            let mut errx = (self.width as i32) - (w as i32);
-            let mut nx: i32 = -(self.bytespp as i32);
-            let mut ox: i32 = -(self.bytespp as i32);
+            let mut errx = (self.width as isize) - (w as isize);
+            let mut nx = -(self.bytespp as isize);
+            let mut ox = -(self.bytespp as isize);
             for __ in range(0, self.width) {
-                ox += self.bytespp as i32;
-                errx += w as i32;
-                while errx >= self.width as i32 {
-                    errx -= self.width as i32;
-                    nx += self.bytespp as i32;
-                    for k in range(0, self.bytespp) {
-                        newdata[nscanline + k + nx as usize] = self.data[oscanline + k + ox as usize];
+                ox += self.bytespp as isize;
+                errx += w as isize;
+                while errx >= self.width as isize {
+                    errx -= self.width as isize;
+                    nx += self.bytespp as isize;
+                    unsafe {
+                        copy_nonoverlapping_memory(newdata.as_mut_ptr().offset(nscanline + nx), self.data.as_ptr().offset(oscanline + ox), self.bytespp)
                     }
                 }
             }
-            erry += h as i32;
+            erry += h as isize;
             oscanline += olinebytes;
-            while erry >= self.height as i32 {
-                if erry >= ((self.height as i32) << 1) {
-                    for i in range(0, nlinebytes) {
-                        newdata[nscanline + nlinebytes + i] = newdata[nscanline + i];
+            while erry >= self.height as isize {
+                if erry >= ((self.height as isize) << 1) {
+                    unsafe {
+                        copy_nonoverlapping_memory(newdata.as_mut_ptr().offset(nscanline + nlinebytes as isize), newdata.as_ptr().offset(nscanline), nlinebytes);
                     }
                 }
-                erry -= self.height as i32;
-                nscanline += nlinebytes;
+                erry -= self.height as isize;
+                nscanline += nlinebytes as isize;
             }
         }
         self.data = newdata;
