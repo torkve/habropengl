@@ -1,0 +1,5 @@
+[package]
+
+name = "opengl"
+version = "0.0.1"
+authors = ["Vsevolod Velichko <torkvema@gmail.com>"]
