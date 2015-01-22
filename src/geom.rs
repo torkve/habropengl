@@ -2,20 +2,21 @@ use tgaimage::{Color, Image};
 use std::io::{IoResult, IoError, IoErrorKind};
 use std::mem::swap;
 use std::num::SignedInt;
+pub use vec::*;
 
 pub trait GeomActions {
-    fn line(&mut self, x0: usize, y0: usize, x1: usize, y1: usize, c: &Color) -> IoResult<()>;
+    fn line(&mut self, from: Vec2i, to: Vec2i, c: &Color) -> IoResult<()>;
 }
 
 impl GeomActions for Image {
-    fn line(&mut self, _x0: usize, _y0: usize, _x1: usize, _y1: usize, c: &Color) -> IoResult<()> {
+    fn line(&mut self, from: Vec2i, to: Vec2i, c: &Color) -> IoResult<()> {
         let mut steep = false;
-        let mut x0 = _x0;
-        let mut x1 = _x1;
-        let mut y0 = _y0;
-        let mut y1 = _y1;
+        let mut x0 = from.x;
+        let mut x1 = to.x;
+        let mut y0 = from.y;
+        let mut y1 = to.y;
 
-        if (x0 as isize - x1 as isize).abs() < (y0 as isize - y1 as isize).abs() {
+        if (x0 - x1).abs() < (y0 - y1).abs() {
             swap(&mut x0, &mut y0);
             swap(&mut x1, &mut y1);
             steep = true;
@@ -26,8 +27,8 @@ impl GeomActions for Image {
             swap(&mut y0, &mut y1);
         }
 
-        let dx = x1 as isize - x0 as isize;
-        let dy = y1 as isize - y0 as isize;
+        let dx = x1 - x0;
+        let dy = y1 - y0;
         let derror2 = dy.abs() * 2;
 
         let mut error2 = 0;
@@ -35,9 +36,9 @@ impl GeomActions for Image {
 
         for x in range(x0, x1 + 1) {
             if steep {
-                try!(self.set(y, x, c));
+                try!(self.set(y as usize, x as usize, c));
             } else {
-                try!(self.set(x, y, c));
+                try!(self.set(x as usize, y as usize, c));
             }
             error2 += derror2;
 
