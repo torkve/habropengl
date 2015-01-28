@@ -1,15 +1,15 @@
 use tgaimage::{Color, Image};
-use std::io::{IoResult, IoError, IoErrorKind};
+use std::old_io::IoResult;
 use std::mem::swap;
 use std::num::SignedInt;
 pub use vec::*;
 
 pub trait GeomActions {
-    fn line(&mut self, from: Vec2i, to: Vec2i, c: &Color) -> IoResult<()>;
+    fn line(&mut self, from: Vec2<isize>, to: Vec2<isize>, c: &Color) -> IoResult<()>;
 }
 
 impl GeomActions for Image {
-    fn line(&mut self, from: Vec2i, to: Vec2i, c: &Color) -> IoResult<()> {
+    fn line(&mut self, from: Vec2<isize>, to: Vec2<isize>, c: &Color) -> IoResult<()> {
         let mut steep = false;
         let mut x0 = from.x;
         let mut x1 = to.x;

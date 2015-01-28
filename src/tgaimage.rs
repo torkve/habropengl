@@ -1,6 +1,6 @@
 #![allow(unstable)]
 
-use std::io::{File, Reader, IoResult, IoError, IoErrorKind};
+use std::old_io::{File, Reader, IoResult, IoError, IoErrorKind};
 use std::path::posix::Path;
 use std::ops::{Index, IndexMut};
 use std::default::Default;

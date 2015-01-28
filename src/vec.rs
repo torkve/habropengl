@@ -1,189 +1,116 @@
-use std::num::{Float, FromPrimitive};
+use std::num::{Float, FromPrimitive, ToPrimitive, NumCast};
 use std::ops::{Add, Sub, Mul, BitXor};
+use std::clone::Clone;
 
 #[derive(Clone, Show)]
-pub struct Vec2i {
-    pub x: isize,
-    pub y: isize
+pub struct Vec2<T> {
+    pub x: T,
+    pub y: T
 }
 
-impl Vec2i {
-    pub fn new(x: isize, y: isize) -> Vec2i {
-        Vec2i {x: x, y: y}
-    }
-}
-
-#[derive(Clone, Show)]
-pub struct Vec2f {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Vec2f {
-    pub fn new(x: f32, y: f32) -> Vec2f {
-        Vec2f {x: x, y: y}
-    }
-}
-
-pub trait Vec2 {}
-impl Vec2 for Vec2i {}
-impl Vec2 for Vec2f {}
-
-#[derive(Clone, Show)]
-pub struct Vec3i {
-    pub x: isize,
-    pub y: isize,
-    pub z: isize,
-}
-
-impl Vec3i {
-    pub fn new(x: isize, y: isize, z: isize) -> Vec3i {
-        Vec3i {x: x, y: y, z: z}
+impl<T> Vec2<T> {
+    pub fn new(x: T, y: T) -> Vec2<T> {
+        Vec2 {x: x, y: y}
     }
 }
 
 #[derive(Clone, Show)]
-pub struct Vec3f {
-    pub x: f32,
-    pub y: f32,
-    pub z: f32,
+pub struct Vec3<T> {
+    pub x: T,
+    pub y: T,
+    pub z: T,
 }
 
-impl Vec3f {
-    pub fn new(x: f32, y: f32, z: f32) -> Vec3f {
-        Vec3f {x: x, y: y, z: z}
+impl<T: Add<T>> Add for Vec2<T> {
+    type Output = Vec2<<T as Add<T>>::Output>;
+    fn add(self, rhs: Vec2<T>) -> Vec2<<T as Add<T>>::Output> {
+        Vec2{x: self.x + rhs.x, y: self.y + rhs.y}
     }
 }
 
-pub trait Vec3 {
-    fn norm(&self) -> f32;
-    fn normalize(&mut self);
-}
-
-impl Vec3 for Vec3i {
-    fn norm(&self) -> f32 {Float::sqrt((self.x * self.x + self.y * self.y + self.z * self.z) as f32)}
-    fn normalize(&mut self) {
-        let norm = 1f32 / self.norm();
-        *self = self.clone() * norm;
+impl<T: Add<T>> Add for Vec3<T> {
+    type Output = Vec3<<T as Add<T>>::Output>;
+    fn add(self, rhs: Vec3<T>) -> Vec3<<T as Add<T>>::Output> {
+        Vec3{x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z}
     }
 }
 
-impl Vec3 for Vec3f {
-    fn norm(&self) -> f32 {(self.x * self.x + self.y * self.y + self.z * self.z).sqrt()}
-    fn normalize(&mut self) {
-        let norm = 1f32 / self.norm();
-        *self = self.clone() * norm;
+impl<T: Sub> Sub for Vec2<T> {
+    type Output = Vec2<<T as Sub<T>>::Output>;
+    fn sub(self, rhs: Vec2<T>) -> Vec2<<T as Sub<T>>::Output> {
+        Vec2{x: self.x - rhs.x, y: self.y - rhs.y}
     }
 }
 
-impl Add for Vec2i {
-    type Output = Vec2i;
-    fn add(self, rhs: Vec2i) -> Vec2i {
-        Vec2i{x: self.x + rhs.x, y: self.y + rhs.y}
+impl<T: Sub> Sub for Vec3<T> {
+    type Output = Vec3<<T as Sub<T>>::Output>;
+    fn sub(self, rhs: Vec3<T>) -> Vec3<<T as Sub<T>>::Output> {
+        Vec3{x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z}
     }
 }
 
-impl Add for Vec2f {
-    type Output = Vec2f;
-    fn add(self, rhs: Vec2f) -> Vec2f {
-        Vec2f{x: self.x + rhs.x, y: self.y + rhs.y}
+impl<T: ToPrimitive + FromPrimitive> Mul<f32> for Vec2<T> {
+    type Output = Vec2<T>;
+    fn mul(self, rhs: f32) -> Vec2<T> {
+        Vec2{
+            x: FromPrimitive::from_f32(rhs * self.x.to_f32().unwrap()).unwrap(),
+            y: FromPrimitive::from_f32(rhs * self.y.to_f32().unwrap()).unwrap(),
+        }
     }
 }
 
-impl Add for Vec3i {
-    type Output = Vec3i;
-    fn add(self, rhs: Vec3i) -> Vec3i {
-        Vec3i{x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z}
+impl<T: Mul + FromPrimitive + ToPrimitive> Mul<f32> for Vec3<T> where <T as Mul>::Output: FromPrimitive {
+    type Output = Vec3<<T as Mul<T>>::Output>;
+    fn mul(self, rhs: f32) -> <Vec3<T> as Mul<f32>>::Output {
+        Vec3{
+            x: FromPrimitive::from_f32(rhs * self.x.to_f32().unwrap()).unwrap(),
+            y: FromPrimitive::from_f32(rhs * self.y.to_f32().unwrap()).unwrap(),
+            z: FromPrimitive::from_f32(rhs * self.z.to_f32().unwrap()).unwrap(),
+        }
     }
 }
 
-impl Add for Vec3f {
-    type Output = Vec3f;
-    fn add(self, rhs: Vec3f) -> Vec3f {
-        Vec3f{x: self.x + rhs.x, y: self.y + rhs.y, z: self.z}
+impl<'a, T: Mul + FromPrimitive + ToPrimitive> Mul<f32> for &'a Vec3<T> where <T as Mul>::Output: FromPrimitive {
+    type Output = Vec3<<T as Mul<T>>::Output>;
+    fn mul(self, rhs: f32) -> <Vec3<T> as Mul<f32>>::Output {
+        Vec3{
+            x: FromPrimitive::from_f32(rhs * self.x.to_f32().unwrap()).unwrap(),
+            y: FromPrimitive::from_f32(rhs * self.y.to_f32().unwrap()).unwrap(),
+            z: FromPrimitive::from_f32(rhs * self.z.to_f32().unwrap()).unwrap(),
+        }
     }
 }
 
-impl Sub for Vec2i {
-    type Output = Vec2i;
-    fn sub(self, rhs: Vec2i) -> Vec2i {
-        Vec2i{x: self.x - rhs.x, y: self.y - rhs.y}
+impl<'a, T: Mul + Clone> BitXor for &'a Vec3<T> where <T as Mul>::Output: Sub {
+    type Output = Vec3<<<T as Mul>::Output as Sub>::Output>;
+    fn bitxor(self, rhs: &Vec3<T>) -> <Self as BitXor>::Output {
+        let sx = &(self.x);
+        let sy = &(self.y);
+        let sz = &(self.z);
+        let rx = &(rhs.x);
+        let ry = &(rhs.y);
+        let rz = &(rhs.z);
+        Vec3{x: sy.clone() * rz.clone() - sz.clone() * ry.clone(), y: sz.clone() * rx.clone() - sx.clone() * rz.clone(), z: sx.clone() * ry.clone() - sy.clone() * rx.clone()}
     }
 }
 
-impl Sub for Vec2f {
-    type Output = Vec2f;
-    fn sub(self, rhs: Vec2f) -> Vec2f {
-        Vec2f{x: self.x - rhs.x, y: self.y - rhs.y}
+impl<T: Clone + Mul + NumCast + FromPrimitive + ToPrimitive> Vec3<T>
+where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mul>::Output as Add>::Output: NumCast
+{
+    pub fn new(x: T, y: T, z: T) -> Vec3<T> {
+        Vec3 {x: x, y: y, z: z}
     }
-}
 
-impl Sub for Vec3i {
-    type Output = Vec3i;
-    fn sub(self, rhs: Vec3i) -> Vec3i {
-        Vec3i{x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z}
+    pub fn norm(&self) -> f32 {
+        Float::sqrt((self.x.clone() * self.x.clone()).to_f32().unwrap() + (self.y.clone() * self.y.clone()).to_f32().unwrap() + (self.z.clone() * self.z.clone()).to_f32().unwrap())
     }
-}
 
-impl Sub for Vec3f {
-    type Output = Vec3f;
-    fn sub(self, rhs: Vec3f) -> Vec3f {
-        Vec3f{x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z}
+    pub fn vec_mul(&self, rhs: &Self) -> T {
+        NumCast::from(self.x.clone() * rhs.x.clone() + NumCast::from(self.y.clone() * rhs.y.clone() + self.z.clone() * rhs.z.clone()).unwrap()).unwrap()
     }
-}
 
-impl Mul<f32> for Vec2i {
-    type Output = Vec2i;
-    fn mul(self, rhs: f32) -> Vec2i {
-        Vec2i{x: (rhs * FromPrimitive::from_int(self.x).unwrap()) as isize, y: (rhs * FromPrimitive::from_int(self.y).unwrap()) as isize}
-    }
-}
-
-impl Mul<f32> for Vec2f {
-    type Output = Vec2f;
-    fn mul(self, rhs: f32) -> Vec2f {
-        Vec2f{x: rhs * self.x, y: rhs * self.y}
-    }
-}
-
-impl Mul<f32> for Vec3i {
-    type Output = Vec3i;
-    fn mul(self, rhs: f32) -> Vec3i {
-        Vec3i{x: (rhs * FromPrimitive::from_int(self.x).unwrap()) as isize, y: (rhs * FromPrimitive::from_int(self.y).unwrap()) as isize, z: (rhs * FromPrimitive::from_int(self.z).unwrap()) as isize}
-    }
-}
-
-impl Mul<f32> for Vec3f {
-    type Output = Vec3f;
-    fn mul(self, rhs: f32) -> Vec3f {
-        Vec3f{x: rhs * self.x, y: rhs * self.y, z: rhs * self.z}
-    }
-}
-
-impl Mul for Vec3i {
-    type Output = isize;
-    fn mul(self, rhs: Vec3i) -> isize {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-    }
-}
-
-impl Mul for Vec3f {
-    type Output = f32;
-    fn mul(self, rhs: Vec3f) -> f32 {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-    }
-}
-
-impl BitXor for Vec3i {
-    type Output = Vec3i;
-    fn bitxor(self, rhs: Vec3i) -> Vec3i {
-        Vec3i{x: self.y * rhs.z - self.z * rhs.y, y: self.z * rhs.x - self.x * rhs.z, z: self.x * rhs.y - self.y * rhs.x}
-    }
-}
-
-impl BitXor for Vec3f {
-    type Output = Vec3f;
-    fn bitxor(self, rhs: Vec3f) -> Vec3f {
-        Vec3f{x: self.y * rhs.z - self.z * rhs.y, y: self.z * rhs.x - self.x * rhs.z, z: self.x * rhs.y - self.y * rhs.x}
+    pub fn normalize(&self) {
+        let norm: f32 = 1f32 / self.norm();
+        self * norm;
     }
 }
