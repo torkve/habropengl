@@ -1,4 +1,5 @@
-#![allow(unstable)]
+#![feature(io)]
+#![feature(core)]
 
 use tgaimage::{Image, Color};
 use geom::GeomActions;

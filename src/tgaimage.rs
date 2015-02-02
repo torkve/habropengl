@@ -1,5 +1,3 @@
-#![allow(unstable)]
-
 use std::old_io::{File, Reader, IoResult, IoError, IoErrorKind};
 use std::path::posix::Path;
 use std::ops::{Index, IndexMut};
@@ -71,7 +69,7 @@ impl Header {
     }
 }
 
-#[derive(PartialEq, Show, Clone)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Color {
     b: u8,
     g: u8,
@@ -258,13 +256,13 @@ impl Image {
         header.image_descriptor = 0x20; // top-left origin
         try!(header.to_stream(&mut f));
         if !rle {
-            try!(f.write(self.data.as_slice()));
+            try!(f.write_all(self.data.as_slice()));
         } else {
             try!(self.dump_rle_data(&mut f));
         }
-        try!(f.write(&developer_area_ref));
-        try!(f.write(&extension_area_ref));
-        try!(f.write(footer.as_bytes()));
+        try!(f.write_all(&developer_area_ref));
+        try!(f.write_all(&extension_area_ref));
+        try!(f.write_all(footer.as_bytes()));
         Ok(())
     }
 
@@ -301,10 +299,11 @@ impl Image {
             }
             curpix += run_length as usize;
             try!(buf.write_u8(if raw { run_length - 1 } else { run_length + 127 }));
-            try!(buf.write(self.data
+            try!(buf.write_all(&self.data
                            .as_slice()
-                           .slice_from(chunkstart)
-                           .slice_to(if raw { (run_length as usize) * self.bytespp } else { self.bytespp })));
+                           [chunkstart..]
+                           [..if raw { (run_length as usize) * self.bytespp } else { self.bytespp }]
+                          ));
         }
         Ok(())
     }
@@ -352,7 +351,7 @@ impl Image {
             return Err(IoError{kind: IoErrorKind::InvalidInput, desc: "Wrong coords", detail: None})
         }
         let start = (x + y * self.width) * self.bytespp;
-        let bytes = self.data.as_slice().slice_from(start).slice_to(self.bytespp);
+        let bytes = &self.data.as_slice()[start .. start + self.bytespp];
         Ok(Color::from_raw(bytes, self.bytespp))
     }
 

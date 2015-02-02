@@ -2,7 +2,7 @@ use std::num::{Float, FromPrimitive, ToPrimitive, NumCast};
 use std::ops::{Add, Sub, Mul, BitXor};
 use std::clone::Clone;
 
-#[derive(Clone, Show)]
+#[derive(Clone, Debug)]
 pub struct Vec2<T> {
     pub x: T,
     pub y: T
@@ -14,7 +14,7 @@ impl<T> Vec2<T> {
     }
 }
 
-#[derive(Clone, Show)]
+#[derive(Clone, Debug)]
 pub struct Vec3<T> {
     pub x: T,
     pub y: T,
