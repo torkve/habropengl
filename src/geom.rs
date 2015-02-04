@@ -1,20 +1,20 @@
 use tgaimage::{Color, Image};
 use std::old_io::IoResult;
 use std::mem::swap;
-use std::num::SignedInt;
+use std::num::{SignedInt, NumCast};
 pub use vec::*;
 
 pub trait GeomActions {
-    fn line(&mut self, from: Vec2<isize>, to: Vec2<isize>, c: &Color) -> IoResult<()>;
+    fn line<T: NumCast>(&mut self, from: Vec2<T>, to: Vec2<T>, c: &Color) -> IoResult<()>;
 }
 
 impl GeomActions for Image {
-    fn line(&mut self, from: Vec2<isize>, to: Vec2<isize>, c: &Color) -> IoResult<()> {
+    fn line<T: NumCast>(&mut self, from: Vec2<T>, to: Vec2<T>, c: &Color) -> IoResult<()> {
         let mut steep = false;
-        let mut x0 = from.x;
-        let mut x1 = to.x;
-        let mut y0 = from.y;
-        let mut y1 = to.y;
+        let mut x0: isize = NumCast::from(from.x).unwrap();
+        let mut x1: isize = NumCast::from(to.x).unwrap();
+        let mut y0: isize = NumCast::from(from.y).unwrap();
+        let mut y1: isize = NumCast::from(to.y).unwrap();
 
         if (x0 - x1).abs() < (y0 - y1).abs() {
             swap(&mut x0, &mut y0);

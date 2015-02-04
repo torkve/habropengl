@@ -8,9 +8,23 @@ pub struct Vec2<T> {
     pub y: T
 }
 
-impl<T> Vec2<T> {
+impl<T: Clone + NumCast + Mul> Vec2<T>
+where <T as Mul>::Output: NumCast + Mul,
+<<T as Mul>::Output as Mul>::Output: ToPrimitive {
     pub fn new(x: T, y: T) -> Vec2<T> {
         Vec2 {x: x, y: y}
+    }
+
+    pub fn scale(&mut self, width: T, height: T) {
+        self.x = NumCast::from(self.x.clone() * width * NumCast::from(0.5f32).unwrap()).unwrap();
+        self.y = NumCast::from(self.y.clone() * height * NumCast::from(0.5f32).unwrap()).unwrap();
+    }
+
+    pub fn to<K: NumCast>(&self) -> Vec2<K> {
+        Vec2 {
+            x: NumCast::from(self.x.clone()).unwrap(),
+            y: NumCast::from(self.y.clone()).unwrap()
+        }
     }
 }
 
@@ -71,8 +85,8 @@ impl<T: Mul + FromPrimitive + ToPrimitive> Mul<f32> for Vec3<T> where <T as Mul>
 }
 
 impl<'a, T: Mul + FromPrimitive + ToPrimitive> Mul<f32> for &'a Vec3<T> where <T as Mul>::Output: FromPrimitive {
-    type Output = Vec3<<T as Mul<T>>::Output>;
-    fn mul(self, rhs: f32) -> <Vec3<T> as Mul<f32>>::Output {
+    type Output = Vec3<T>;
+    fn mul(self, rhs: f32) -> Vec3<T> {
         Vec3{
             x: FromPrimitive::from_f32(rhs * self.x.to_f32().unwrap()).unwrap(),
             y: FromPrimitive::from_f32(rhs * self.y.to_f32().unwrap()).unwrap(),
@@ -109,9 +123,13 @@ where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mu
         NumCast::from(self.x.clone() * rhs.x.clone() + NumCast::from(self.y.clone() * rhs.y.clone() + self.z.clone() * rhs.z.clone()).unwrap()).unwrap()
     }
 
-    pub fn normalize(&self) {
+    pub fn normalize(&self) -> Vec3<T> {
         let norm: f32 = 1f32 / self.norm();
-        self * norm;
+        self * norm
+    }
+    
+    pub fn to_vec2(&self) -> Vec2<T> {
+        Vec2 {x: self.x.clone(), y: self.y.clone()}
     }
 }
 
