@@ -1,5 +1,3 @@
-#![feature(macro_rules)]
-
 use std::vec::Vec;
 use std::slice::SliceExt;
 use std::str::FromStr;
@@ -21,7 +19,7 @@ macro_rules! try_parse (
 
 macro_rules! try_parse_opt (
     ($f:expr) => (
-        match ($f) {
+        match $f {
             None => return Err(IoError{kind: IoErrorKind::InvalidInput, desc: "Invalid file format", detail: None}),
             Some(x) => try_parse!(x)
         }
@@ -47,7 +45,7 @@ impl Model {
                     try_parse!(parts[3]),
                     );
                 verts.push(v);
-            } else if parts[0] == "f" && parts.len() > 5 {
+            } else if parts[0] == "f" && parts.len() > 3 {
                 let mut indices: Vec<usize> = Vec::new();
                 for part in parts[1..].iter() {
                     let idx = part.split('/').next();
@@ -59,15 +57,23 @@ impl Model {
         Ok(Model {verts: verts, faces: faces})
     }
 
+    #[inline]
     pub fn nverts(&self) -> usize {
         self.verts.len()
     }
 
+    #[inline]
     pub fn nfaces(&self) -> usize {
         self.faces.len()
     }
 
-    pub fn face(& self, idx: usize) -> &Vec<usize> {
+    #[inline]
+    pub fn face(&self, idx: usize) -> &Vec<usize> {
         &self.faces[idx]
+    }
+
+    #[inline]
+    pub fn vert(&self, idx: usize) -> &Vec3f {
+        &self.verts[idx]
     }
 }

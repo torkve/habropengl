@@ -1,5 +1,6 @@
 #![feature(io)]
 #![feature(core)]
+#![feature(macro_rules)]
 
 use tgaimage::{Image, Color};
 use geom::GeomActions;
