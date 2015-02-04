@@ -114,3 +114,8 @@ where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mu
         self * norm;
     }
 }
+
+pub type Vec2f = Vec2<f32>;
+pub type Vec2i = Vec2<i32>;
+pub type Vec3f = Vec3<f32>;
+pub type Vec3i = Vec3<i32>;
