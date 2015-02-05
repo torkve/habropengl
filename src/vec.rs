@@ -54,6 +54,13 @@ impl<T: Add<T>> Add for Vec3<T> {
     }
 }
 
+impl<'a, T: Copy + Add<T>> Add for &'a Vec3<T> {
+    type Output = Vec3<<T as Add<T>>::Output>;
+    fn add(self, rhs: &Vec3<T>) -> Vec3<<T as Add<T>>::Output> {
+        Vec3{x: self.x + rhs.x, y: self.y + rhs.y, z: self.z + rhs.z}
+    }
+}
+
 impl<T: Clone + NumCast + Mul + Add + Sub> Sub for Vec2<T>
 where <T as Sub>::Output: Clone + NumCast + Mul + Add + Sub {
     type Output = Vec2<<T as Sub<T>>::Output>;
@@ -136,7 +143,9 @@ impl<T: Mul + Clone + Copy> BitXor for Vec3<T> where <T as Mul>::Output: Sub {
 }
 
 impl<T: Clone + Copy + NumCast + Mul + Add + Sub + FromPrimitive + ToPrimitive> Vec3<T>
-where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mul>::Output as Add>::Output: NumCast
+where <T as Mul>::Output: Mul + Add + ToPrimitive + FromPrimitive + NumCast,
+      <<T as Mul>::Output as Add>::Output: NumCast,
+      <<T as Mul>::Output as Mul>::Output: NumCast
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 {x: x, y: y, z: z}
@@ -157,6 +166,20 @@ where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mu
     
     pub fn to_vec2(&self) -> Vec2<T> {
         Vec2 {x: self.x, y: self.y}
+    }
+
+    pub fn to<K: Clone + NumCast + Mul + Add + Sub>(&self) -> Vec3<K> {
+        Vec3 {
+            x: NumCast::from(self.x).unwrap(),
+            y: NumCast::from(self.y).unwrap(),
+            z: NumCast::from(self.z).unwrap(),
+        }
+    }
+
+    pub fn scale(&mut self, width: T, height: T, depth: T) {
+        self.x = NumCast::from(self.x * width * NumCast::from(0.5f32).unwrap()).unwrap();
+        self.y = NumCast::from(self.y * height * NumCast::from(0.5f32).unwrap()).unwrap();
+        self.z = NumCast::from(self.z * depth * NumCast::from(0.5f32).unwrap()).unwrap();
     }
 }
 

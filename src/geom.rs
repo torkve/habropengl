@@ -1,4 +1,5 @@
 use tgaimage::{Color, Image};
+use zbuffer::ZBuffer;
 use std::old_io::IoResult;
 use std::mem::swap;
 use std::num::{SignedInt, NumCast};
@@ -6,7 +7,7 @@ pub use vec::*;
 
 pub trait GeomActions {
     fn line<T: NumCast>(&mut self, from: Vec2<T>, to: Vec2<T>, c: &Color) -> IoResult<()>;
-    fn triangle(&mut self, mut t0: Vec2<isize>, mut t1: Vec2<isize>, mut t2: Vec2<isize>, c: &Color) -> IoResult<()>;
+    fn triangle(&mut self, mut t0: Vec3f, mut t1: Vec3f, mut t2: Vec3f, c: &Color, zbuf: &mut ZBuffer) -> IoResult<()>;
 }
 
 impl GeomActions for Image {
@@ -51,7 +52,7 @@ impl GeomActions for Image {
         Ok(())
     }
 
-    fn triangle(&mut self, mut t0: Vec2<isize>, mut t1: Vec2<isize>, mut t2: Vec2<isize>, c: &Color) -> IoResult<()> {
+    fn triangle(&mut self, mut t0: Vec3f, mut t1: Vec3f, mut t2: Vec3f, c: &Color, zbuf: &mut ZBuffer) -> IoResult<()> {
         if t0.y == t1.y && t0.y == t2.y {
             //return Err(IoError{kind: IoErrorKind::InvalidInput, desc: "Degenerated triangle", detail: None})
             return Ok(())
@@ -66,35 +67,40 @@ impl GeomActions for Image {
             swap(&mut t1, &mut t2);
         }
 
-        try!(self.line(t0, t1, c));
-        try!(self.line(t1, t2, c));
-        try!(self.line(t2, t0, c));
-
         let total_height = t2.y - t0.y;
 
-        for i in range(0, total_height) {
-            let second_half = i > t1.y - t0.y || t1.y == t0.y;
+        for i in range(0us, total_height as usize) {
+            let second_half = i as f32 > t1.y - t0.y || t1.y == t0.y;
             let segment_height = if second_half { t2.y - t1.y } else { t1.y - t0.y };
-            let alpha = i as f32 / total_height as f32;
+            let alpha = i as f32 / total_height;
             let beta = if second_half {
-                (i + t0.y - t1.y) as f32 / segment_height as f32
+                (i as f32 + t0.y - t1.y) / segment_height
             } else {
-                i as f32 / segment_height as f32
+                i as f32 / segment_height
             };
 
-            let mut a = t0 + (t2 - t0) * alpha;
-            let mut b = if second_half {
-                t1 + (t2 - t1) * beta
+            let mut a: Vec3i = (t0 + (t2 - t0) * alpha).to();
+            let mut b: Vec3i = if second_half {
+                (t1 + (t2 - t1) * beta).to()
             } else {
-                t0 + (t1 - t0) * beta
+                (t0 + (t1 - t0) * beta).to()
             };
 
             if a.x > b.x {
                 swap(&mut a, &mut b);
             }
 
-            for j in range(a.x, b.x) {
-                try!(self.set(j as usize, t0.y as usize + i as usize, c));
+            for j in range(a.x as isize, b.x as isize) {
+                let phi = if b.x == a.x {
+                    1.
+                } else {
+                    (j - a.x as isize) as f32 / (b.x - a.x) as f32
+                };
+                let p = (a.to::<f32>() + (b - a).to::<f32>() * phi).to::<isize>();
+                if (*zbuf.val(p.x as usize, p.y as usize) as isize) < p.z {
+                    *zbuf.val_mut(p.x as usize, p.y as usize) = p.z as i32;
+                    try!(self.set(p.x as usize, p.y as usize, c));
+                }
             }
         }
 

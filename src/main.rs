@@ -10,6 +10,7 @@ mod geom;
 mod vec;
 mod model;
 mod render;
+mod zbuffer;
 
 fn main() {
     let width = 800;
