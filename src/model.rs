@@ -2,7 +2,7 @@ use std::vec::Vec;
 use std::slice::SliceExt;
 use std::str::FromStr;
 use vec::{Vec3, Vec3f};
-use std::path::posix::Path;
+use std::old_path::posix::Path;
 use std::old_io::{File, BufferedReader, IoResult, IoError, IoErrorKind};
 
 #[derive(Debug)]

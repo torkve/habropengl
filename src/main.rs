@@ -2,7 +2,6 @@
 #![feature(core)]
 
 use tgaimage::Image;
-use geom::GeomActions;
 use model::Model;
 use render::Renderer;
 

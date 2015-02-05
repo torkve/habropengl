@@ -3,14 +3,14 @@ use std::ops::{Add, Sub, Mul, BitXor};
 use std::clone::Clone;
 
 #[derive(Clone, Debug)]
-pub struct Vec2<T> {
+pub struct Vec2<T> where T: Clone + NumCast + Mul + Add + Sub {
     pub x: T,
     pub y: T
 }
 
 impl<T: Copy> Copy for Vec2<T> {}
 
-impl<T: Clone + NumCast + Mul> Vec2<T>
+impl<T: Clone + NumCast + Mul + Add + Sub> Vec2<T>
 where <T as Mul>::Output: NumCast + Mul,
 <<T as Mul>::Output as Mul>::Output: ToPrimitive {
     pub fn new(x: T, y: T) -> Vec2<T> {
@@ -22,7 +22,7 @@ where <T as Mul>::Output: NumCast + Mul,
         self.y = NumCast::from(self.y.clone() * height * NumCast::from(0.5f32).unwrap()).unwrap();
     }
 
-    pub fn to<K: NumCast>(&self) -> Vec2<K> {
+    pub fn to<K: Clone + NumCast + Mul + Add + Sub>(&self) -> Vec2<K> {
         Vec2 {
             x: NumCast::from(self.x.clone()).unwrap(),
             y: NumCast::from(self.y.clone()).unwrap()
@@ -39,7 +39,8 @@ pub struct Vec3<T> {
 
 impl<T: Copy> Copy for Vec3<T> {}
 
-impl<T: Add<T>> Add for Vec2<T> {
+impl<T: Clone + NumCast + Mul + Add + Sub> Add for Vec2<T>
+where <T as Add>::Output: Clone + NumCast + Mul + Add + Sub {
     type Output = Vec2<<T as Add<T>>::Output>;
     fn add(self, rhs: Vec2<T>) -> Vec2<<T as Add<T>>::Output> {
         Vec2{x: self.x + rhs.x, y: self.y + rhs.y}
@@ -53,7 +54,8 @@ impl<T: Add<T>> Add for Vec3<T> {
     }
 }
 
-impl<T: Sub> Sub for Vec2<T> {
+impl<T: Clone + NumCast + Mul + Add + Sub> Sub for Vec2<T>
+where <T as Sub>::Output: Clone + NumCast + Mul + Add + Sub {
     type Output = Vec2<<T as Sub<T>>::Output>;
     fn sub(self, rhs: Vec2<T>) -> Vec2<<T as Sub<T>>::Output> {
         Vec2{x: self.x - rhs.x, y: self.y - rhs.y}
@@ -67,7 +69,7 @@ impl<T: Sub> Sub for Vec3<T> {
     }
 }
 
-impl<T: ToPrimitive + FromPrimitive> Mul<f32> for Vec2<T> {
+impl<T: Clone + NumCast + Mul + Add + Sub +ToPrimitive + FromPrimitive> Mul<f32> for Vec2<T> {
     type Output = Vec2<T>;
     fn mul(self, rhs: f32) -> Vec2<T> {
         Vec2{
@@ -112,7 +114,7 @@ impl<'a, T: Mul + Clone> BitXor for &'a Vec3<T> where <T as Mul>::Output: Sub {
     }
 }
 
-impl<T: Clone + Mul + NumCast + FromPrimitive + ToPrimitive> Vec3<T>
+impl<T: Clone + NumCast + Mul + Add + Sub + FromPrimitive + ToPrimitive> Vec3<T>
 where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mul>::Output as Add>::Output: NumCast
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {

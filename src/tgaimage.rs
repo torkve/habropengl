@@ -1,5 +1,5 @@
 use std::old_io::{File, Reader, IoResult, IoError, IoErrorKind};
-use std::path::posix::Path;
+use std::old_path::posix::Path;
 use std::ops::{Index, IndexMut};
 use std::default::Default;
 use std::ptr::{set_memory, copy_memory, copy_nonoverlapping_memory};
