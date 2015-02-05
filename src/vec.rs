@@ -69,7 +69,7 @@ impl<T: Sub> Sub for Vec3<T> {
     }
 }
 
-impl<T: Clone + NumCast + Mul + Add + Sub +ToPrimitive + FromPrimitive> Mul<f32> for Vec2<T> {
+impl<T: Clone + NumCast + Mul + Add + Sub + ToPrimitive + FromPrimitive> Mul<f32> for Vec2<T> {
     type Output = Vec2<T>;
     fn mul(self, rhs: f32) -> Vec2<T> {
         Vec2{
@@ -101,20 +101,41 @@ impl<'a, T: Mul + FromPrimitive + ToPrimitive> Mul<f32> for &'a Vec3<T> where <T
     }
 }
 
-impl<'a, T: Mul + Clone> BitXor for &'a Vec3<T> where <T as Mul>::Output: Sub {
+impl<'a, T: Mul + Clone + Copy> BitXor for &'a Vec3<T> where <T as Mul>::Output: Sub {
     type Output = Vec3<<<T as Mul>::Output as Sub>::Output>;
     fn bitxor(self, rhs: &Vec3<T>) -> <Self as BitXor>::Output {
-        let sx = &(self.x);
-        let sy = &(self.y);
-        let sz = &(self.z);
-        let rx = &(rhs.x);
-        let ry = &(rhs.y);
-        let rz = &(rhs.z);
-        Vec3{x: sy.clone() * rz.clone() - sz.clone() * ry.clone(), y: sz.clone() * rx.clone() - sx.clone() * rz.clone(), z: sx.clone() * ry.clone() - sy.clone() * rx.clone()}
+        let sx = self.x;
+        let sy = self.y;
+        let sz = self.z;
+        let rx = rhs.x;
+        let ry = rhs.y;
+        let rz = rhs.z;
+        Vec3{
+            x: sy * rz - sz * ry,
+            y: sz * rx - sx * rz,
+            z: sx * ry - sy * rx
+        }
     }
 }
 
-impl<T: Clone + NumCast + Mul + Add + Sub + FromPrimitive + ToPrimitive> Vec3<T>
+impl<T: Mul + Clone + Copy> BitXor for Vec3<T> where <T as Mul>::Output: Sub {
+    type Output = Vec3<<<T as Mul>::Output as Sub>::Output>;
+    fn bitxor(self, rhs: Vec3<T>) -> <Self as BitXor>::Output {
+        let sx = self.x;
+        let sy = self.y;
+        let sz = self.z;
+        let rx = rhs.x;
+        let ry = rhs.y;
+        let rz = rhs.z;
+        Vec3{
+            x: sy * rz - sz * ry,
+            y: sz * rx - sx * rz,
+            z: sx * ry - sy * rx
+        }
+    }
+}
+
+impl<T: Clone + Copy + NumCast + Mul + Add + Sub + FromPrimitive + ToPrimitive> Vec3<T>
 where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mul>::Output as Add>::Output: NumCast
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
@@ -122,11 +143,11 @@ where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mu
     }
 
     pub fn norm(&self) -> f32 {
-        Float::sqrt((self.x.clone() * self.x.clone()).to_f32().unwrap() + (self.y.clone() * self.y.clone()).to_f32().unwrap() + (self.z.clone() * self.z.clone()).to_f32().unwrap())
+        Float::sqrt((self.x * self.x).to_f32().unwrap() + (self.y * self.y).to_f32().unwrap() + (self.z * self.z).to_f32().unwrap())
     }
 
     pub fn vec_mul(&self, rhs: &Self) -> T {
-        NumCast::from(self.x.clone() * rhs.x.clone() + NumCast::from(self.y.clone() * rhs.y.clone() + self.z.clone() * rhs.z.clone()).unwrap()).unwrap()
+        NumCast::from(self.x * rhs.x + NumCast::from(self.y * rhs.y + self.z * rhs.z).unwrap()).unwrap()
     }
 
     pub fn normalize(&self) -> Vec3<T> {
@@ -135,7 +156,7 @@ where <T as Mul>::Output: Add + ToPrimitive + FromPrimitive + NumCast, <<T as Mu
     }
     
     pub fn to_vec2(&self) -> Vec2<T> {
-        Vec2 {x: self.x.clone(), y: self.y.clone()}
+        Vec2 {x: self.x, y: self.y}
     }
 }
 
