@@ -10,7 +10,7 @@ pub struct Vec2<T> where T: Clone + NumCast + Mul + Add + Sub {
 
 impl<T: Copy> Copy for Vec2<T> {}
 
-impl<T: Clone + NumCast + Mul + Add + Sub> Vec2<T>
+impl<T: Copy + Clone + NumCast + Mul + Add + Sub> Vec2<T>
 where <T as Mul>::Output: NumCast + Mul,
 <<T as Mul>::Output as Mul>::Output: ToPrimitive {
     pub fn new(x: T, y: T) -> Vec2<T> {
@@ -18,14 +18,14 @@ where <T as Mul>::Output: NumCast + Mul,
     }
 
     pub fn scale(&mut self, width: T, height: T) {
-        self.x = NumCast::from(self.x.clone() * width * NumCast::from(0.5f32).unwrap()).unwrap();
-        self.y = NumCast::from(self.y.clone() * height * NumCast::from(0.5f32).unwrap()).unwrap();
+        self.x = NumCast::from(self.x * width * NumCast::from(0.5f32).unwrap()).unwrap();
+        self.y = NumCast::from(self.y * height * NumCast::from(0.5f32).unwrap()).unwrap();
     }
 
     pub fn to<K: Clone + NumCast + Mul + Add + Sub>(&self) -> Vec2<K> {
         Vec2 {
-            x: NumCast::from(self.x.clone()).unwrap(),
-            y: NumCast::from(self.y.clone()).unwrap()
+            x: NumCast::from(self.x).unwrap(),
+            y: NumCast::from(self.y).unwrap()
         }
     }
 }
