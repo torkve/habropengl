@@ -143,8 +143,8 @@ const RGBA: u8 = 4;
 #[derive(PartialEq, Clone)]
 pub struct Image {
     data: Vec<u8>,
-    width: usize,
-    height: usize,
+    pub width: usize,
+    pub height: usize,
     bytespp: usize
 }
 

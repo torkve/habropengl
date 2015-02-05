@@ -8,6 +8,8 @@ pub struct Vec2<T> {
     pub y: T
 }
 
+impl<T: Copy> Copy for Vec2<T> {}
+
 impl<T: Clone + NumCast + Mul> Vec2<T>
 where <T as Mul>::Output: NumCast + Mul,
 <<T as Mul>::Output as Mul>::Output: ToPrimitive {
@@ -34,6 +36,8 @@ pub struct Vec3<T> {
     pub y: T,
     pub z: T,
 }
+
+impl<T: Copy> Copy for Vec3<T> {}
 
 impl<T: Add<T>> Add for Vec2<T> {
     type Output = Vec2<<T as Add<T>>::Output>;
